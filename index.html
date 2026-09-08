@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>工会驿站智能助手 · 单文件版</title>
+<style>
+:root{--bg:#f7f1e8;--card:#fffaf2;--ink:#3b2a20;--muted:#8a6f5c;--red:#c7372f;--red2:#e15b4f;--line:#eadfce;--green:#2f7d5d;--blue:#2f5f9d;--shadow:0 10px 28px rgba(80,50,30,.12)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;background:radial-gradient(circle at 10% 0,#fff7ec,var(--bg));color:var(--ink)}
+header{padding:20px 26px;background:linear-gradient(135deg,#fff4df,#ffe7dd);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:9;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:23px}.sub{color:var(--muted);font-size:13px;margin-top:5px}.badge{background:var(--red);color:#fff;border-radius:99px;padding:4px 10px;font-size:12px;margin-left:8px;vertical-align:middle}
+main{max-width:1180px;margin:auto;padding:20px}.tabs{display:flex;flex-wrap:wrap;gap:9px;margin:6px 0 16px}.tab{border:1px solid var(--line);background:#fffdf8;border-radius:99px;padding:9px 14px;cursor:pointer}.tab.active{background:var(--red);color:#fff;border-color:var(--red)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:var(--shadow)}.full{grid-column:1/-1}
+label{display:block;font-size:13px;color:var(--muted);margin:9px 0 5px}input,textarea,select{width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fffdf8;color:var(--ink);font-size:14px;font-family:inherit}textarea{min-height:100px;resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--red2);box-shadow:0 0 0 3px rgba(225,91,79,.12);outline:none}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:11px}.btns{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}.btn{border:0;border-radius:11px;padding:10px 14px;background:var(--red);color:#fff;cursor:pointer;font-weight:700}.btn.secondary{background:#6b4f3f}.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn.green{background:var(--green)}.btn.blue{background:var(--blue)}
+pre{white-space:pre-wrap;word-break:break-word;background:#fffdf8;border:1px dashed #d8c4ad;border-radius:13px;padding:15px;min-height:250px;margin:0;line-height:1.75;font-family:"Microsoft YaHei",Arial,sans-serif}.muted{color:var(--muted);font-size:13px}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.kpi .card{padding:13px;text-align:center}.num{font-size:27px;color:var(--red);font-weight:800}
+.list{display:grid;gap:10px}.item{border:1px solid var(--line);background:#fffdf8;border-radius:13px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.item.done .title{text-decoration:line-through;color:var(--muted)}.small{font-size:12px}.danger{color:#a02020}.pill{display:inline-block;background:#f2e4d3;color:#6b4f3f;border-radius:99px;padding:3px 9px;font-size:12px;margin:0 6px 6px 0;cursor:pointer}.pill:hover{background:#e8d2ba}.pill.sel{background:var(--red);color:#fff}
+canvas{width:100%;border-radius:14px;border:1px solid var(--line);background:#fff}.theme{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.swatch{height:50px;border-radius:12px;border:2px solid transparent;cursor:pointer}.swatch.active{border-color:#333}
+.slogan{border:1px solid var(--line);background:#fffdf8;border-radius:12px;padding:11px;margin-bottom:9px;display:flex;justify-content:space-between;gap:9px;align-items:center}.slogan b{font-size:16px}
+.hidden{display:none!important}.toast{position:fixed;right:18px;bottom:18px;background:#3b2a20;color:#fff;padding:11px 15px;border-radius:11px;opacity:0;transition:.25s;pointer-events:none}.toast.show{opacity:1}
+@media(max-width:880px){.grid,.row{grid-template-columns:1fr}.kpi{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><div><h1>工会驿站智能助手<span class="badge">单文件版 · 双击即用</span></h1><div class="sub">通知 · 海报 · 新闻稿 · 宣传标语 · 日程 · 总结。无需服务器/数据库/联网，数据保存在本机浏览器。</div></div><div><button class="btn ghost" onclick="backupAll()">导出备份</button> <button class="btn ghost" onclick="importBackup()">导入备份</button></div></header>
+<main>
+<div class="tabs" id="tabs">
+<button class="tab active" data-tab="home">工作台</button><button class="tab" data-tab="notice">通知</button><button class="tab" data-tab="slogan">宣传标语</button><button class="tab" data-tab="poster">海报</button><button class="tab" data-tab="news">新闻稿</button><button class="tab" data-tab="schedule">日程</button><button class="tab" data-tab="summary">总结</button><button class="tab" data-tab="history">历史</button>
+</div>
+
+<section id="home" class="page"><div class="kpi">
+<div class="card"><div class="num" id="kDoc">0</div><div class="muted">已存文案</div></div>
+<div class="card"><div class="num" id="kTodo">0</div><div class="muted">待办日程</div></div>
+<div class="card"><div class="num" id="kDone">0</div><div class="muted">完成日程</div></div>
+<div class="card"><div class="num" id="kPoster">0</div><div class="muted">已导海报</div></div></div>
+<div class="card full" style="margin-top:16px"><h3 style="margin-top:0">使用流程</h3><p class="muted">左栏填要素 → 一键生成 → 右栏复制/下载/导出图片 → 点“保存到历史”。换电脑前请点右上角“导出备份”，到新电脑点“导入备份”。</p>
+<div class="btns"><button class="btn" onclick="go('notice')">写通知</button><button class="btn green" onclick="go('slogan')">写标语</button><button class="btn blue" onclick="go('poster')">做海报</button><button class="btn secondary" onclick="go('schedule')">排日程</button></div>
+<p class="muted">提示：建议使用 Chrome / Edge 浏览器打开；不要用微信内置浏览器直接打开文件。</p></div></section>
+
+<section id="notice" class="page hidden"><div class="grid">
+<div class="card"><h3 style="margin-top:0">通知要素</h3>
+<label>驿站名称</label><input id="nStation" value="暖心工会驿站">
+<div class="row"><div><label>通知对象</label><input id="nTo" value="辖区户外劳动者"></div><div><label>落款</label><input id="nFrom" value="工会驿站服务组"></div></div>
+<label>事项</label><textarea id="nThing">开展“送清凉”活动，提供免费绿豆汤、防暑包。</textarea>
+<div class="row"><div><label>时间</label><input id="nTime" value="本周五 14:00-16:00"></div><div><label>地点</label><input id="nPlace" value="驿站门口"></div></div>
+<label>备注</label><textarea id="nNote">有序排队，志愿者现场引导。</textarea>
+<div class="btns"><button class="btn" onclick="genNotice()">生成通知</button><button class="btn ghost" onclick="saveCurrent('notice')">保存历史</button></div></div>
+<div class="card"><h3 style="margin-top:0">生成结果（含 3 种群发风格）</h3><pre id="nOut">点击左侧生成。</pre>
+<div class="btns"><button class="btn secondary" onclick="copyText('nOut')">复制全部</button><button class="btn blue" onclick="downloadText('nOut','通知.txt')">下载</button></div></div></div></section>
+
+<section id="slogan" class="page hidden"><div class="grid">
+<div class="card"><h3 style="margin-top:0">标语要素</h3>
+<label>主题/活动</label><input id="gTopic" value="夏日送清凉">
+<label>面向人群</label><input id="gWho" value="外卖骑手、快递员、环卫工人">
+<label>风格</label><select id="gStyle"><option>亲切暖心</option><option>简洁有力</option><option>幽默接地气</option><option>正式宣传</option></select>
+<label>希望突出的服务（可空）</label><input id="gKey" value="免费加水、充电、避暑">
+<div class="btns"><button class="btn green" onclick="genSlogan()">生成 10 条</button><button class="btn ghost" onclick="saveCurrent('slogan')">保存历史</button></div>
+<p class="muted">生成后可点单条复制，也可选“写入海报”，自动填到海报副标题。</p></div>
+<div class="card"><h3 style="margin-top:0">候选标语</h3><div id="gOut" class="muted">点击左侧生成。</div></div></div></section>
+
+<section id="poster" class="page hidden"><div class="grid">
+<div class="card"><h3 style="margin-top:0">海报信息</h3>
+<label>主标题</label><input id="pTitle" value="夏日送清凉">
+<label>副标题</label><input id="pSub" value="免费加水 · 能充电 · 有空调">
+<div class="row"><div><label>时间</label><input id="pTime" value="每天 11:00-16:00"></div><div><label>地点</label><input id="pPlace" value="暖心工会驿站"></div></div>
+<div class="row"><div><label>主办</label><input id="pHost" value="XX街道总工会"></div><div><label>联系</label><input id="pTel" value="0000-12345678"></div></div>
+<label>配色</label><div class="theme" id="themes"></div>
+<div class="btns"><button class="btn green" onclick="drawPoster()">刷新预览</button><button class="btn secondary" onclick="exportPoster()">导出 PNG</button><button class="btn ghost" onclick="saveCurrent('poster')">保存历史</button></div></div>
+<div class="card"><h3 style="margin-top:0">预览</h3><canvas id="posterCanvas" width="900" height="1200"></canvas></div></div></section>
+
+<section id="news" class="page hidden"><div class="grid">
+<div class="card"><h3 style="margin-top:0">活动信息</h3>
+<label>标题</label><input id="wTitle" value="工会驿站开展送清凉活动">
+<div class="row"><div><label>时间地点</label><input id="wWhen" value="9月8日下午，暖心工会驿站"></div><div><label>参与</label><input id="wNum" value="约60名骑手、环卫工"></div></div>
+<label>过程</label><textarea id="wProcess">志愿者现场提供绿豆汤、防暑包，开放空调休息区，并收集服务需求12条。</textarea>
+<label>亮点</label><textarea id="wPoint">把服务送到劳动者身边，提升了驿站知晓率。</textarea>
+<div class="btns"><button class="btn" onclick="genNews()">生成新闻稿</button><button class="btn ghost" onclick="saveCurrent('news')">保存历史</button></div></div>
+<div class="card"><h3 style="margin-top:0">生成结果</h3><pre id="wOut">点击左侧生成。</pre><div class="btns"><button class="btn secondary" onclick="copyText('wOut')">复制</button><button class="btn blue" onclick="downloadText('wOut','新闻稿.txt')">下载</button></div></div></div></section>
+
+<section id="schedule" class="page hidden"><div class="grid">
+<div class="card"><h3 style="margin-top:0">添加日程</h3>
+<label>事项</label><input id="sTitle" placeholder="如：免费理发">
+<div class="row"><div><label>日期</label><input id="sDate" type="date"></div><div><label>时间</label><input id="sTime" value="09:00-11:00"></div></div>
+<div class="row"><div><label>类型</label><select id="sType"><option>服务</option><option>活动</option><option>会议</option><option>检查</option></select></div><div><label>负责人</label><input id="sOwner" value="志愿者A"></div></div>
+<label>备注</label><input id="sNote">
+<div class="btns"><button class="btn blue" onclick="addSchedule()">添加</button><button class="btn ghost" onclick="exportCSV()">导出 CSV</button></div></div>
+<div class="card"><h3 style="margin-top:0">日程 <span class="muted" id="sCount"></span></h3><div class="list" id="sList"></div></div></div></section>
+
+<section id="summary" class="page hidden"><div class="grid">
+<div class="card"><h3 style="margin-top:0">总结要素</h3>
+<label>周期</label><input id="mPeriod" value="2026年9月第一周">
+<label>主要工作（一行一条）</label><textarea id="mWorks">常态提供饮水充电休息服务
+开展送清凉活动1场
+收集并回应职工需求12条</textarea>
+<label>数据成效</label><textarea id="mData">服务约230人次，发放防暑包60份。</textarea>
+<label>问题与计划</label><textarea id="mPlan">高峰休息位不足；下周增设临时座椅。</textarea>
+<div class="btns"><button class="btn" onclick="genSummary()">生成总结</button><button class="btn ghost" onclick="saveCurrent('summary')">保存历史</button></div></div>
+<div class="card"><h3 style="margin-top:0">生成结果</h3><pre id="mOut">点击左侧生成。</pre><div class="btns"><button class="btn secondary" onclick="copyText('mOut')">复制</button><button class="btn blue" onclick="downloadText('mOut','总结.txt')">下载</button></div></div></div></section>
+
+<section id="history" class="page hidden"><div class="card full">
+<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><h3 style="margin:0">历史记录</h3><div><select id="hFilter" onchange="renderHistory()"><option value="">全部</option><option>通知</option><option>宣传标语</option><option>新闻稿</option><option>工作总结</option><option>海报</option></select> <button class="btn ghost" onclick="clearHistory()">清空</button></div></div>
+<p class="muted">存在本机浏览器，清理会丢；请勤用“导出备份”。</p><div class="list" id="hList"></div></div></section>
+</main>
+<div class="toast" id="toast"></div>
+<input type="file" id="impFile" accept=".json" style="display:none" onchange="doImport(event)">
+<script>
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){localStorage.setItem(k,JSON.stringify(v))}};
+let docs=store.get('gy2_docs',[]),todos=store.get('gy2_todos',[]),posterCount=store.get('gy2_poster',0),theme='red',lastSlogans=[];
+const themes={red:['#c7372f','#f7d9c4','#3b2a20'],gold:['#b8860b','#f6e7bd','#3a2a12'],green:['#2f7d5d','#d7eadf','#203b31'],blue:['#2f5f9d','#dbe8f7','#22334a']};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500)}
+function go(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));$(id).classList.remove('hidden');if(id==='poster')drawPoster();if(id==='home')kpis();if(id==='history')renderHistory();if(id==='schedule')renderTodos();window.scrollTo(0,0)}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)go(b.dataset.tab)});
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function copyStr(s){navigator.clipboard.writeText(s).then(()=>toast('已复制')).catch(()=>{const ta=document.createElement('textarea');ta.value=s;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('已复制')})}
+function copyText(id){copyStr($(id).textContent)}
+function downloadText(id,name){const b=new Blob([$(id).textContent],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+function save(kind,title,content,extra){docs.unshift({id:Date.now(),kind,title,content,extra:extra||{},time:new Date().toLocaleString()});store.set('gy2_docs',docs);kpis();renderHistory();toast('已保存')}
+function saveCurrent(k){const map={notice:['通知',($('nStation').value||'驿站')+'通知',$('nOut').textContent],slogan:['宣传标语',$('gTopic').value+'标语',lastSlogans.join('\n')],news:['新闻稿',$('wTitle').value,$('wOut').textContent],summary:['工作总结',($('mPeriod').value||'阶段')+'总结',$('mOut').textContent],poster:['海报',($('pTitle').value||'驿站')+'海报','海报已设计，请到海报页导出 PNG',{style:theme}]};const x=map[k];if(!x||(x[2].includes('点击')&&!x[2].includes('。')))return toast('请先生成');save(x[0],x[1],x[2],x[3])}
+/* 通知 */
+function genNotice(){const g=i=>$(i).value.trim();const note=g('nNote');$('nOut').textContent=
+'【张贴版】\n'+g('nStation')+'通知\n\n'+g('nTo')+'：\n  为进一步做好职工服务，'+g('nStation')+'将于'+g('nTime')+'在'+g('nPlace')+g('nThing')+'请大家相互转告，按需参加。\n\n  时间：'+g('nTime')+'\n  地点：'+g('nPlace')+(note?'\n  备注：'+note:'')+'\n\n'+g('nFrom')+'\n'+new Date().toLocaleDateString()+
+'\n\n────────────\n\n【微信群正式版】\n各位'+g('nTo')+'，'+g('nStation')+'将于'+g('nTime')+'在'+g('nPlace')+g('nThing')+(note?'温馨提示：'+note:'')+'请合理安排时间参加。——'+g('nFrom')+
+'\n\n【骑手亲切版】\n兄弟们注意啦！'+g('nTime')+'，'+g('nPlace')+'，'+g('nThing')+(note?'（'+note+'）':'')+'顺路就过来，免费又省心。有问题找驿站。'+
+'\n\n【喇叭吆喝版】\n'+g('nTime').split(' ')[0]+' '+g('nPlace')+'，'+g('nThing').replace(/。$/,'')+'！风里雨里，驿站等你！';toast('通知已生成')}
+/* 标语 */
+const BANK={
+'亲切暖心':['累了就进来坐一坐，{station}永远是你的家。','{topic}，我们把清凉送到你手上。','你守护这座城市，我们守护你。','{who}辛苦了，{key}，欢迎常来。','一杯绿豆汤，一份工会的牵挂。'],
+'简洁有力':['{topic}，就在{station}。','{key}——{station}全年守候。','高温天不硬扛，{station}有清凉。','服务职工，{station}是认真的。','{who}，这里免费为你加油。'],
+'幽默接地气':['手机要充电，人也充充电。','奶茶先别点，这里的绿豆汤免费续。','外卖送得快，喝水要趁热——哦不，趁冰。','今天不拼单，拼个清凉。','累了就停一脚，{station}管水还管电。'],
+'正式宣传':['扎实开展“{topic}”活动，切实把关怀送到一线劳动者心坎上。','{station}持续完善服务体系，为{who}提供{key}等暖心服务。','坚持以职工为中心，{topic}我们在行动。','小驿站，大服务；{key}，暖人心。']};
+function genSlogan(){const t=$('gTopic').value.trim()||'工会服务',who=$('gWho').value.trim()||'劳动者',key=$('gKey').value.trim()||'饮水、休息、充电',st=$('nStation').value.trim()||'工会驿站';const tpls=BANK[$('gStyle').value];const out=[];const used=new Set();let guard=0;while(out.length<10&&guard<60){guard++;const tpl=tpls[Math.floor(Math.random()*tpls.length)];let s=tpl.replaceAll('{topic}',t).replaceAll('{who}',who).replaceAll('{key}',key).replaceAll('{station}',st);if(used.has(s))continue;used.add(s);out.push(s)}
+lastSlogans=out;const box=$('gOut');box.innerHTML='';out.forEach(s=>{const d=document.createElement('div');d.className='slogan';d.innerHTML='<b>“'+esc(s)+'”</b><span style="white-space:nowrap"><button class="btn ghost">复制</button> <button class="btn ghost">写入海报</button></span>';const bs=d.querySelectorAll('button');bs[0].onclick=()=>copyStr(s);bs[1].onclick=()=>{$('pSub').value=s;drawPoster();toast('已写入海报副标题');go('poster')};box.appendChild(d)});toast('已生成 10 条')}
+/* 海报 */
+function initThemes(){const box=$('themes');Object.keys(themes).forEach(k=>{const d=document.createElement('div');d.className='swatch'+(k===theme?' active':'');d.style.background='linear-gradient(135deg,'+themes[k][0]+','+themes[k][1]+')';d.onclick=()=>{theme=k;document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));d.classList.add('active');drawPoster()};box.appendChild(d)})}
+function wrap(ctx,text,x,y,maxW,lh){let line='',yy=y;for(const ch of String(text)){if(ctx.measureText(line+ch).width>maxW){ctx.fillText(line,x,yy);line=ch;yy+=lh}else line+=ch}ctx.fillText(line,x,yy);return yy}
+function wrapC(ctx,text,cx,y,maxW,lh){let line='',yy=y;const lines=[];for(const ch of String(text)){if(ctx.measureText(line+ch).width>maxW){lines.push(line);line=ch}else line+=ch}lines.push(line);lines.forEach((l,i)=>ctx.fillText(l,cx,yy+i*lh));return yy+(lines.length-1)*lh}
+function drawPoster(){const c=$('posterCanvas'),x=c.getContext('2d'),W=c.width,H=c.height,m=themes[theme],main=m[0],soft=m[1],ink=m[2];x.fillStyle=soft;x.fillRect(0,0,W,H);
+x.fillStyle=main;x.fillRect(0,0,24,H);x.fillRect(W-24,0,24,H);x.fillStyle='rgba(255,255,255,.22)';x.fillRect(24,0,10,H);x.fillRect(W-34,0,10,H);
+x.textAlign='center';x.fillStyle=ink;x.font='bold 96px "Microsoft YaHei",Arial';let y=wrapC(x,$('pTitle').value,W/2,400,W-260,112);
+x.fillStyle=main;x.font='37px "Microsoft YaHei",Arial';y=wrapC(x,$('pSub').value,W/2,y+58,W-240,54);
+x.strokeStyle=main;x.lineWidth=4;x.beginPath();x.moveTo(W/2-130,y+48);x.lineTo(W/2+130,y+48);x.stroke();x.save();x.translate(W/2,y+48);x.rotate(Math.PI/4);x.fillStyle=main;x.fillRect(-9,-9,18,18);x.restore();
+const cardY=y+105;x.fillStyle='#fffdf8';x.fillRect(90,cardY,W-180,300);x.strokeStyle=main;x.lineWidth=3;x.strokeRect(90,cardY,W-180,300);
+x.textAlign='left';x.fillStyle=ink;x.font='bold 42px "Microsoft YaHei",Arial';[('时间：'+$('pTime').value),('地点：'+$('pPlace').value),('主办：'+$('pHost').value),('联系：'+$('pTel').value)].forEach((s,i)=>x.fillText(s,145,cardY+76+i*62));
+x.fillStyle=main;x.beginPath();x.arc(W-165,cardY+150,62,0,7);x.fill();x.fillStyle='#fff';x.font='bold 22px "Microsoft YaHei",Arial';x.textAlign='center';x.fillText('驿站',W-165,cardY+142);x.fillText('服务',W-165,cardY+172);
+x.textAlign='center';x.fillStyle=ink;x.font='30px "Microsoft YaHei",Arial';x.fillText('暖心相伴 · 劳动光荣',W/2,H-80)}
+function exportPoster(){drawPoster();const a=document.createElement('a');a.download=($('pTitle').value||'海报')+'.png';a.href=$('posterCanvas').toDataURL('image/png');a.click();posterCount++;store.set('gy2_poster',posterCount);kpis();toast('PNG 已导出')}
+/* 新闻稿/总结 */
+function genNews(){const t=$('wTitle').value.trim(),w=$('wWhen').value.trim(),n=$('wNum').value.trim(),p=$('wProcess').value.trim(),pt=$('wPoint').value.trim();$('wOut').textContent=t+'\n\n'+w+'，'+t+'顺利开展，'+n+'参加。\n\n活动现场，'+p+'现场秩序井然，气氛温馨。\n\n'+pt+'。下一步，工会驿站将继续聚焦一线劳动者需求，把服务做得更细更实。\n\n供稿：工会驿站服务组\n'+new Date().toLocaleDateString();toast('已生成')}
+function genSummary(){const ls=$('mWorks').value.split('\n').map(s=>s.trim()).filter(Boolean).map((s,i)=>(i+1)+'. '+s).join('\n');$('mOut').textContent=$('mPeriod').value+'工作总结\n\n一、主要工作\n'+ls+'\n\n二、数据与成效\n'+$('mData').value.trim()+'\n\n三、问题与计划\n'+$('mPlan').value.trim()+'\n\n四、下一步安排\n持续收集职工意见，优化服务流程，推动驿站服务常态化、精细化。\n\n工会驿站服务组\n'+new Date().toLocaleDateString();toast('已生成')}
+/* 日程 */
+function addSchedule(){if(!$('sTitle').value.trim())return toast('请填事项');if(!$('sDate').value)return toast('请选日期');todos.unshift({id:Date.now(),title:$('sTitle').value.trim(),date:$('sDate').value,time:$('sTime').value,type:$('sType').value,owner:$('sOwner').value,note:$('sNote').value,done:false});store.set('gy2_todos',todos);$('sTitle').value='';$('sNote').value='';renderTodos();kpis();toast('已添加')}
+function renderTodos(){todos.sort((a,b)=>(a.done-b.done)||a.date.localeCompare(b.date));$('sCount').textContent='共 '+todos.length+' 条';const box=$('sList');box.innerHTML=todos.length?'':'<div class="muted">暂无日程。</div>';todos.forEach(t=>{const d=document.createElement('div');d.className='item'+(t.done?' done':'');d.innerHTML='<div><b>'+esc(t.title)+'</b> <span class="pill">'+esc(t.type)+'</span><div class="muted small">'+esc(t.date)+' '+esc(t.time)+' · '+esc(t.owner)+(t.note?' · '+esc(t.note):'')+'</div></div><div style="white-space:nowrap"><button class="btn ghost" onclick="tg('+t.id+')">'+(t.done?'取消':'完成')+'</button> <button class="btn ghost danger" onclick="dl('+t.id+')">删</button></div>';box.appendChild(d)})}
+function tg(id){const t=todos.find(x=>x.id===id);if(t){t.done=!t.done;store.set('gy2_todos',todos);renderTodos();kpis()}}
+function dl(id){todos=todos.filter(x=>x.id!==id);store.set('gy2_todos',todos);renderTodos();kpis()}
+function exportCSV(){const rows=[['日期','时间','事项','类型','负责人','备注','状态']].concat(todos.map(t=>[t.date,t.time,t.title,t.type,t.owner,t.note,t.done?'已完成':'待办']));const csv=rows.map(r=>r.map(c=>'"'+String(c).replaceAll('"','""')+'"').join(',')).join('\n');const b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='驿站日程.csv';a.click();URL.revokeObjectURL(a.href);toast('CSV 已导出')}
+/* 历史/备份 */
+function renderHistory(){const f=$('hFilter').value,box=$('hList');const arr=docs.filter(d=>!f||d.kind===f);box.innerHTML=arr.length?'':'<div class="muted">暂无历史。</div>';arr.forEach(d=>{const el=document.createElement('div');el.className='item';el.innerHTML='<div><span class="pill">'+esc(d.kind)+'</span><b>'+esc(d.title)+'</b><div class="muted small">'+esc(d.time)+'</div></div><div style="white-space:nowrap"><button class="btn ghost" onclick="viewDoc('+d.id+')">查看</button> <button class="btn ghost" onclick="copyDoc('+d.id+')">复制</button> <button class="btn ghost danger" onclick="delDoc('+d.id+')">删</button></div>';box.appendChild(el)})}
+function viewDoc(id){const d=docs.find(x=>x.id===id);if(!d)return;const w=window.open('','_blank');w.document.write('<meta charset="utf-8"><title>'+esc(d.title)+'</title><style>body{font-family:Microsoft YaHei,Arial;max-width:820px;margin:40px auto;line-height:1.85;color:#3b2a20;white-space:pre-wrap;padding:0 16px}h1{color:#c7372f;font-size:22px}</style><h1>'+esc(d.title)+'</h1><div>'+esc(d.content)+'</div>');w.document.close()}
+function copyDoc(id){const d=docs.find(x=>x.id===id);if(d)copyStr(d.content)}
+function delDoc(id){docs=docs.filter(x=>x.id!==id);store.set('gy2_docs',docs);renderHistory();kpis()}
+function clearHistory(){if(confirm('确定清空全部历史文案？')){docs=[];store.set('gy2_docs',docs);renderHistory();kpis()}}
+function backupAll(){const data={app:'工会驿站智能助手单文件版',docs,todos,posterCount,exportedAt:new Date().toLocaleString()};const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='驿站助手备份.json';a.click();URL.revokeObjectURL(a.href);toast('备份已导出')}
+function importBackup(){$('impFile').click()}
+function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.docs&&!d.todos)throw 0;docs=d.docs||[];todos=d.todos||[];posterCount=d.posterCount||0;store.set('gy2_docs',docs);store.set('gy2_todos',todos);store.set('gy2_poster',posterCount);kpis();renderTodos();renderHistory();toast('导入成功')}catch(err){toast('文件无效')}};r.readAsText(f);e.target.value=''}
+function kpis(){$('kDoc').textContent=docs.length;$('kTodo').textContent=todos.filter(t=>!t.done).length;$('kDone').textContent=todos.filter(t=>t.done).length;$('kPoster').textContent=posterCount}
+window.addEventListener('input',e=>{if(['pTitle','pSub','pTime','pPlace','pHost','pTel'].includes(e.target.id))drawPoster()});
+initThemes();drawPoster();kpis();renderTodos();renderHistory();$('sDate').value=new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
